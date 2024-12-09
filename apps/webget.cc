@@ -1,16 +1,33 @@
-#include "socket.hh"
-
 #include <cstdlib>
 #include <iostream>
 #include <span>
 #include <string>
+#include "socket.hh"
 
 using namespace std;
 
 void get_URL( const string& host, const string& path )
 {
-  cerr << "Function called: get_URL(" << host << ", " << path << ")\n";
-  cerr << "Warning: get_URL() has not been implemented yet.\n";
+TCPSocket client_socket; 
+client_socket.connect(Address(host, "http"));
+client_socket.write(string("GET " + path + " HTTP/1.1\r"));
+
+vector<string> buf;
+client_socket.read(buf); 
+if (buf.size() >= 3 && buf[1] == string("200") && buf[2] == string("OK")) {
+  client_socket.write(string("Host: " + path + "\r"));
+}
+buf.clear();
+
+while (!client_socket.eof()) {
+  client_socket.read(buf);
+  for (auto it = buf.begin(); it < --buf.end(); it++) cout << buf.front() << " ";
+  cout << buf.back() << endl;
+  buf.clear();
+}
+client_socket.write(string("Connection: close\r"));
+client_socket.close();
+
 }
 
 int main( int argc, char* argv[] )
